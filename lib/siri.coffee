@@ -1,3 +1,21 @@
+MeCab = require 'mecab-async'
+mecab = new MeCab();
+
+# カタカタテキストをひらがなに変換する
+katakanaToHiragana = (src) ->
+	src.replace /[\u30a1-\u30f6]/g, (match) ->
+		String.fromCharCode(match.charCodeAt(0) - 0x60)
+
+# よみがなを取得する
+# [TODO] 漢字だけで構成された未知語の場合はひらがなに変換できず、そのまま漢字を返してしまう
+getYomi = (text, cb) ->
+  mecab.parse text, (err, elements) ->
+    return cb(err) if err
+
+    # ele[8]: よみがな列、未知語の場合は ele[0] を使用する
+    katakana = elements.map((ele) -> ele[8] || ele[0]).join('')
+    cb(null, katakanaToHiragana(katakana))
+
 class Siri
   # 単語の末尾を取得する
   @getTail: (word) ->
@@ -73,21 +91,25 @@ class Siri
 
     !beforeWord || Siri.getTail(beforeWord) == Siri.getHead(given)
 
+  # 末尾が「ん」かどうかを返す
   _isTailUn: (givenTail) ->
     givenTail == 'ん'
 
   _onReceiveAnswer: (res) ->
     given = res.match[1]
-    tail = Siri.getTail(given)
-    console.log @_isTailUn, @_canConnect
-    return @_win(res, '「ん」がついたからあなたの負け!') if @_isTailUn(tail)
-    return @_advise(res, '使えない単語です') unless @_canConnect(given)
 
-    candidates = @_findAnswers(tail)
+    getYomi given, (err, yomi) =>
+      tail = Siri.getTail(yomi)
+      @_markForUsed(yomi)
 
-    if candidates.length > 0
-      @_answer(res, candidates[0])
-    else
-      @_giveUp(res, '負けました (´・ω・`)')
+      return @_win(res, '「ん」がついたからあなたの負け!') if @_isTailUn(tail)
+      return @_advise(res, '使えない単語です') unless @_canConnect(yomi)
+
+      candidates = @_findAnswers(tail)
+
+      if candidates.length > 0
+        @_answer(res, candidates[0])
+      else
+        @_giveUp(res, '負けました (´・ω・`)')
 
 module.exports = Siri
