@@ -18,10 +18,10 @@ getYomi = (text, cb) ->
         .map (ele) -> ele[8] || ele[0]
         .join('')
 
-		if /^[\u30a1-\u30f6]+$/.test(katakana)
-    	cb(null, katakanaToHiragana(katakana))
-		else
-			cb(null, null)
+    if /^[\u30a1-\u30f6]+$/.test(katakana)
+      cb(null, katakanaToHiragana(katakana))
+    else
+      cb(null, null)
 
 class Siri
   # 単語の末尾を取得する
@@ -105,7 +105,7 @@ class Siri
     given = res.match[1]
 
     getYomi given, (err, yomi) =>
-			return @_advise(res, "#{yomi} の読みがわからない") unless yomi
+      return @_advise(res, "「#{given}」の読みがわからない") unless yomi
 
       tail = Siri.getTail(yomi)
 
