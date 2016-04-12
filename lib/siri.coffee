@@ -13,7 +13,10 @@ getYomi = (text, cb) ->
     return cb(err) if err
 
     # ele[8]: よみがな列、未知語の場合は ele[0] を使用する
-    katakana = elements.map((ele) -> ele[8] || ele[0]).join('')
+    katakana =
+      elements
+        .map (ele) -> ele[8] || ele[0]
+        .join('')
     cb(null, katakanaToHiragana(katakana))
 
 class Siri
@@ -87,7 +90,6 @@ class Siri
   # given がしりとり単語として使えるかどうかを返す
   _canConnect: (given) ->
     beforeWord = @_wordHistory[@_wordHistory.length - 1]
-    # return true unless beforeWord
 
     !beforeWord || Siri.getTail(beforeWord) == Siri.getHead(given)
 
@@ -100,11 +102,11 @@ class Siri
 
     getYomi given, (err, yomi) =>
       tail = Siri.getTail(yomi)
-      @_markForUsed(yomi)
 
       return @_win(res, '「ん」がついたからあなたの負け!') if @_isTailUn(tail)
       return @_advise(res, '使えない単語です') unless @_canConnect(yomi)
 
+      @_markForUsed(yomi)
       candidates = @_findAnswers(tail)
 
       if candidates.length > 0
