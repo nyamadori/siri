@@ -34,16 +34,7 @@ class Siri
 
   # コンストラクタ
   constructor: (@robot) ->
-    @_usedWords =
-      'しりとり': null
-      'りんご': null
-      'ごま': null
-      'ごまだれ': null
-      'ごぼう': null
-      'りくじょう': null
-      'ごりら': null
-      'らっぱ': null
-
+    @_usedWords = @robot.brain.get('knownWords') ? {}
     @_wordHistory = []
 
   # しりとりゲームを開始する
@@ -101,6 +92,12 @@ class Siri
   _isTailUn: (givenTail) ->
     givenTail == 'ん'
 
+  # 単語を記録する
+  _memoizeWord: (newWord) ->
+    knownWords = @robot.brain.get('knownWords') ? {}
+    knownWords[newWord] = null
+    @robot.brain.set 'knownWords', knownWords
+
   _onReceiveAnswer: (res) ->
     given = res.match[1]
 
@@ -113,6 +110,7 @@ class Siri
       return @_advise(res, '使えない単語です') unless @_canConnect(yomi)
 
       @_markForUsed(yomi)
+      @_memoizeWord(yomi)
       candidates = @_findAnswers(tail)
 
       if candidates.length > 0
