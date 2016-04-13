@@ -6,22 +6,27 @@ katakanaToHiragana = (src) ->
 	src.replace /[\u30a1-\u30f6]/g, (match) ->
 		String.fromCharCode(match.charCodeAt(0) - 0x60)
 
+isKanaText = (text) -> /^[ぁ-んァ-ンー]+$/.test(text)
+
 # よみがなを取得する
 # [TODO] 漢字だけで構成された未知語の場合はひらがなに変換できず、そのまま漢字を返してしまう
 getYomi = (text, cb) ->
-  mecab.parse text, (err, elements) ->
-    return cb(err) if err
+  if isKanaText(text)
+    cb(null, katakanaToHiragana(text))
+  else
+    mecab.parse text, (err, elements) ->
+      return cb(err) if err
 
-    # ele[8]: よみがな列、未知語の場合は ele[0] を使用する
-    katakana =
-      elements
-        .map (ele) -> ele[8] || ele[0]
-        .join('')
+      # ele[8]: よみがな列、未知語の場合は ele[0] を使用する
+      katakana =
+        elements
+          .map (ele) -> ele[8] || ele[0]
+          .join('')
 
-    if /^[\u30a1-\u30f6]+$/.test(katakana)
-      cb(null, katakanaToHiragana(katakana))
-    else
-      cb(null, null)
+      if /^[\u30a1-\u30f6]+$/.test(katakana)
+        cb(null, katakanaToHiragana(katakana))
+      else
+        cb(null, null)
 
 class Siri
   # 単語の末尾を取得する
