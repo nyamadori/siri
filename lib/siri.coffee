@@ -9,7 +9,7 @@ katakanaToHiragana = (src) ->
 isKanaText = (text) -> /^[ぁ-んァ-ンー]+$/.test(text)
 
 # よみがなを取得する
-# [TODO] 漢字だけで構成された未知語の場合はひらがなに変換できず、そのまま漢字を返してしまう
+# 漢字を含む文字で構成された未知語の場合は null を返す
 getYomi = (text, cb) ->
   if isKanaText(text)
     cb(null, katakanaToHiragana(text))
